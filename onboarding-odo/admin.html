@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — ODO Outaouais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <header class="site-header">
+        <a href="index.html" class="brand">
+          <span class="brand-mark"></span>
+          <span>ODO Outaouais</span>
+        </a>
+        <div>
+          <a href="index.html" class="nav-link">← Retour au site</a>
+          <button id="logout-btn" class="btn btn-ghost btn-sm" style="display: none; margin-left: 1rem;">Déconnexion</button>
+        </div>
+      </header>
+
+      <!-- Page de connexion -->
+      <main id="login-view">
+        <div class="container-narrow" style="margin: 2rem auto;">
+          <p class="welcome-eyebrow">Espace admin</p>
+          <h1>Connexion administrateur</h1>
+          <p class="welcome-subtitle">Entre le mot de passe partagé pour gérer les employés, étapes et documents.</p>
+
+          <div class="card">
+            <div class="field">
+              <label for="password-input">Mot de passe</label>
+              <input type="password" id="password-input" class="input" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div id="login-error" style="color: #c02f2f; font-size: 0.85rem; margin-bottom: 1rem; display: none;">
+              Mot de passe incorrect.
+            </div>
+            <button id="login-btn" class="btn btn-primary">Se connecter</button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Vue admin -->
+      <main id="admin-view" style="display: none;">
+        <p class="welcome-eyebrow">Espace admin</p>
+        <h1>Gestion de l'onboarding</h1>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="employees">Employés</button>
+          <button class="tab" data-tab="steps">Étapes &amp; documents</button>
+          <button class="tab" data-tab="data">Sauvegarde</button>
+        </div>
+
+        <!-- Onglet employés -->
+        <section class="tab-panel active" id="tab-employees">
+          <div class="card">
+            <div class="admin-section-header">
+              <h2 style="margin: 0;">Liste des employés</h2>
+              <button class="btn btn-accent btn-sm" id="add-employee-btn">+ Ajouter un employé</button>
+            </div>
+            <div id="employees-list" class="admin-list"></div>
+          </div>
+        </section>
+
+        <!-- Onglet étapes -->
+        <section class="tab-panel" id="tab-steps">
+          <div class="card">
+            <div class="admin-section-header">
+              <h2 style="margin: 0;">Étapes du parcours</h2>
+              <button class="btn btn-accent btn-sm" id="add-step-btn">+ Ajouter une étape</button>
+            </div>
+            <div id="steps-list"></div>
+          </div>
+        </section>
+
+        <!-- Onglet sauvegarde -->
+        <section class="tab-panel" id="tab-data">
+          <div class="card">
+            <h2>Sauvegarde des données</h2>
+            <p style="opacity: 0.75; font-size: 0.95rem;">
+              Toutes les données sont stockées localement dans ce navigateur (localStorage).
+              Pour ne pas perdre ta configuration, exporte-la régulièrement et conserve une copie.
+            </p>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem;">
+              <button class="btn btn-primary btn-sm" id="export-btn">⬇ Exporter (JSON)</button>
+              <button class="btn btn-ghost btn-sm" id="import-btn">⬆ Importer</button>
+              <input type="file" id="import-file" accept="application/json" style="display: none;">
+              <button class="btn btn-danger btn-sm" id="reset-btn">⟲ Tout réinitialiser</button>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(29,41,55,0.08);">
+              <h3 style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem;">Statistiques globales</h3>
+              <div id="global-stats" style="font-size: 0.9rem; opacity: 0.8;"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modale générique -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
