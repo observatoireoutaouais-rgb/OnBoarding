@@ -1,54 +1,63 @@
 /* =========================================================
-   ODO Onboarding — Couche de données (localStorage)
+   ODO Onboarding — Couche de données (Firebase Firestore)
    =========================================================
-   Schéma:
+   Architecture :
+   - Firestore stocke un seul document : /app/data
+   - Au démarrage, on charge ce document dans un cache local
+   - L'UI lit toujours depuis le cache (synchrone)
+   - Toute modification est écrite en Firestore puis le cache
+     se met à jour via le listener temps réel (onSnapshot)
+   - Plusieurs utilisateurs voient les mêmes données en direct
+
+   Schéma du document :
    {
      employees: [{ id, name }],
-     steps: [{
-        id, title, description,
-        documents: [{ id, name, url }]
-     }],
-     progress: {
-        [employeeId]: { [docId]: true }
-     },
-     comments: {
-        [employeeId]: {
-          steps: { [stepId]: "texte du commentaire" },
-          docs:  { [docId]:  "texte du commentaire" }
-        }
-     }
+     steps: [{ id, title, description, documents: [{id, name, url}] }],
+     progress: { [employeeId]: { [docId]: true } },
+     comments: { [employeeId]: { steps: {...}, docs: {...} } }
    }
    ========================================================= */
 
-const STORAGE_KEY = 'odo_onboarding_v1';
-const ADMIN_PASSWORD = 'odo2026';   // ← Changez ce mot de passe pour la mise en production
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot
+} from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+
+/* =========================================================
+   ⚙️ CONFIGURATION FIREBASE
+   ---------------------------------------------------------
+   Remplace les valeurs ci-dessous par celles de TON projet
+   Firebase. Tu trouveras ces infos dans la console Firebase :
+   Project settings → General → "Your apps" → SDK setup
+   ========================================================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDAT4mXAU5gbQdEZ6oJMiIvkPIvpvWlYbQ",
+  authDomain: "onboarding-4d099.firebaseapp.com",
+  projectId: "onboarding-4d099",
+  storageBucket: "onboarding-4d099.firebasestorage.app",
+  messagingSenderId: "142033753111",
+  appId: "1:142033753111:web:5e5ef83bff842d36097852"
+};
+
+const ADMIN_PASSWORD = 'odo2026';   // ← change-moi avant la mise en production
 const ADMIN_SESSION_KEY = 'odo_admin_session';
+const DOC_PATH = ['app', 'data'];   // collection "app", document "data"
 
 const AVATAR_COLORS = ['#A3B0E0', '#FDCA44', '#F36C12', '#CEDD88', '#49ABA7', '#177FC4'];
 
-/* ---------- Utilitaires ---------- */
+/* ---------- Initialisation Firebase ---------- */
 
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const dataDocRef = doc(db, DOC_PATH[0], DOC_PATH[1]);
 
-function getInitials(name) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map(p => p[0] || '')
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
+/* ---------- Cache local (synchrone) ---------- */
 
-function colorFor(id) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-/* ---------- État ---------- */
+let cache = null;       // null = pas encore chargé
+let isReady = false;
+const readyCallbacks = [];
+const changeCallbacks = [];
 
 function defaultData() {
   return {
@@ -62,23 +71,6 @@ function defaultData() {
           { id: uid(), name: 'Présentation de l\'organisation', url: 'https://example.com' },
           { id: uid(), name: 'Mini-guide de normes ODO', url: 'https://example.com' }
         ]
-      },
-      {
-        id: uid(),
-        title: 'Documents administratifs',
-        description: 'Formulaires à remplir et à signer pour ton dossier RH.',
-        documents: [
-          { id: uid(), name: 'Formulaire d\'embauche', url: 'https://example.com' },
-          { id: uid(), name: 'Politique de confidentialité', url: 'https://example.com' }
-        ]
-      },
-      {
-        id: uid(),
-        title: 'Outils et accès',
-        description: 'Configure tes outils de travail et tes accès aux plateformes.',
-        documents: [
-          { id: uid(), name: 'Guide de connexion', url: 'https://example.com' }
-        ]
       }
     ],
     progress: {},
@@ -86,178 +78,207 @@ function defaultData() {
   };
 }
 
-function load() {
+/* ---------- Utilitaires ---------- */
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function getInitials(name) {
+  return name.trim().split(/\s+/).map(p => p[0] || '').slice(0, 2).join('').toUpperCase();
+}
+
+function colorFor(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff;
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+/* ---------- Sync Firestore ---------- */
+
+async function persist() {
+  if (!cache) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const fresh = defaultData();
-      save(fresh);
-      return fresh;
-    }
-    const data = JSON.parse(raw);
-    // Migration douce: ajoute le champ comments si absent (versions antérieures)
-    if (!data.comments) data.comments = {};
-    return data;
+    await setDoc(dataDocRef, cache);
   } catch (e) {
-    console.error('Erreur de lecture localStorage', e);
-    return defaultData();
+    console.error('Erreur d\'écriture Firestore', e);
+    showToast('⚠️ Erreur de sauvegarde. Vérifie ta connexion.');
   }
 }
 
-function save(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function ensureCommentsScaffold(data) {
+  if (!data.comments) data.comments = {};
+  return data;
 }
 
-/* ---------- Employés ---------- */
+// Écoute en temps réel : toute modification (depuis ce navigateur ou un autre)
+// remplace le cache et notifie l'UI.
+onSnapshot(dataDocRef, async (snap) => {
+  if (snap.exists()) {
+    cache = ensureCommentsScaffold(snap.data());
+  } else {
+    // Première utilisation : crée le document avec les valeurs par défaut
+    cache = defaultData();
+    await persist();
+  }
+
+  if (!isReady) {
+    isReady = true;
+    readyCallbacks.forEach(cb => cb());
+    readyCallbacks.length = 0;
+  }
+  changeCallbacks.forEach(cb => cb());
+}, (err) => {
+  console.error('Erreur Firestore', err);
+  showToast('⚠️ Connexion à la base de données impossible.');
+});
+
+/* ---------- API publique ---------- */
 
 const Data = {
-  getAll() { return load(); },
+  /* Indique quand les données sont chargées pour la première fois */
+  ready(callback) {
+    if (isReady) callback();
+    else readyCallbacks.push(callback);
+  },
 
-  getEmployees() { return load().employees; },
-  getEmployee(id) { return load().employees.find(e => e.id === id); },
+  /* Notifie l'UI quand les données changent (pour rafraîchir la page) */
+  onChange(callback) {
+    changeCallbacks.push(callback);
+  },
 
-  addEmployee(name) {
-    const data = load();
+  isReady() { return isReady; },
+
+  getAll() { return cache; },
+
+  /* ---------- Employés ---------- */
+
+  getEmployees() { return cache?.employees || []; },
+  getEmployee(id) { return cache?.employees.find(e => e.id === id); },
+
+  async addEmployee(name) {
     const employee = { id: uid(), name: name.trim() };
-    data.employees.push(employee);
-    save(data);
+    cache.employees.push(employee);
+    await persist();
     return employee;
   },
 
-  removeEmployee(id) {
-    const data = load();
-    data.employees = data.employees.filter(e => e.id !== id);
-    delete data.progress[id];
-    delete data.comments[id];
-    save(data);
+  async removeEmployee(id) {
+    cache.employees = cache.employees.filter(e => e.id !== id);
+    delete cache.progress[id];
+    delete cache.comments[id];
+    await persist();
   },
 
   /* ---------- Étapes ---------- */
 
-  getSteps() { return load().steps; },
+  getSteps() { return cache?.steps || []; },
 
-  addStep({ title, description }) {
-    const data = load();
+  async addStep({ title, description }) {
     const step = { id: uid(), title: title.trim(), description: (description || '').trim(), documents: [] };
-    data.steps.push(step);
-    save(data);
+    cache.steps.push(step);
+    await persist();
     return step;
   },
 
-  updateStep(id, { title, description }) {
-    const data = load();
-    const step = data.steps.find(s => s.id === id);
+  async updateStep(id, { title, description }) {
+    const step = cache.steps.find(s => s.id === id);
     if (!step) return;
     if (title !== undefined) step.title = title.trim();
     if (description !== undefined) step.description = description.trim();
-    save(data);
+    await persist();
   },
 
-  removeStep(id) {
-    const data = load();
-    const removedDocs = data.steps.find(s => s.id === id)?.documents.map(d => d.id) || [];
-    data.steps = data.steps.filter(s => s.id !== id);
-    // Nettoyer la progression de tous les employés
-    Object.keys(data.progress).forEach(empId => {
-      removedDocs.forEach(docId => delete data.progress[empId][docId]);
+  async removeStep(id) {
+    const removedDocs = cache.steps.find(s => s.id === id)?.documents.map(d => d.id) || [];
+    cache.steps = cache.steps.filter(s => s.id !== id);
+    Object.keys(cache.progress).forEach(empId => {
+      removedDocs.forEach(docId => delete cache.progress[empId][docId]);
     });
-    save(data);
+    await persist();
   },
 
-  moveStep(id, direction) {
-    const data = load();
-    const idx = data.steps.findIndex(s => s.id === id);
+  async moveStep(id, direction) {
+    const idx = cache.steps.findIndex(s => s.id === id);
     const target = idx + direction;
-    if (idx < 0 || target < 0 || target >= data.steps.length) return;
-    [data.steps[idx], data.steps[target]] = [data.steps[target], data.steps[idx]];
-    save(data);
+    if (idx < 0 || target < 0 || target >= cache.steps.length) return;
+    [cache.steps[idx], cache.steps[target]] = [cache.steps[target], cache.steps[idx]];
+    await persist();
   },
 
   /* ---------- Documents ---------- */
 
-  addDocument(stepId, { name, url }) {
-    const data = load();
-    const step = data.steps.find(s => s.id === stepId);
+  async addDocument(stepId, { name, url }) {
+    const step = cache.steps.find(s => s.id === stepId);
     if (!step) return;
     step.documents.push({ id: uid(), name: name.trim(), url: url.trim() });
-    save(data);
+    await persist();
   },
 
-  updateDocument(stepId, docId, { name, url }) {
-    const data = load();
-    const step = data.steps.find(s => s.id === stepId);
-    const doc = step?.documents.find(d => d.id === docId);
-    if (!doc) return;
-    if (name !== undefined) doc.name = name.trim();
-    if (url !== undefined) doc.url = url.trim();
-    save(data);
+  async updateDocument(stepId, docId, { name, url }) {
+    const step = cache.steps.find(s => s.id === stepId);
+    const docu = step?.documents.find(d => d.id === docId);
+    if (!docu) return;
+    if (name !== undefined) docu.name = name.trim();
+    if (url !== undefined) docu.url = url.trim();
+    await persist();
   },
 
-  removeDocument(stepId, docId) {
-    const data = load();
-    const step = data.steps.find(s => s.id === stepId);
+  async removeDocument(stepId, docId) {
+    const step = cache.steps.find(s => s.id === stepId);
     if (!step) return;
     step.documents = step.documents.filter(d => d.id !== docId);
-    Object.keys(data.progress).forEach(empId => delete data.progress[empId][docId]);
-    save(data);
+    Object.keys(cache.progress).forEach(empId => delete cache.progress[empId][docId]);
+    await persist();
   },
 
   /* ---------- Progression ---------- */
 
-  getProgress(employeeId) {
-    return load().progress[employeeId] || {};
+  getProgress(employeeId) { return cache?.progress[employeeId] || {}; },
+
+  async setDocChecked(employeeId, docId, checked) {
+    if (!cache.progress[employeeId]) cache.progress[employeeId] = {};
+    if (checked) cache.progress[employeeId][docId] = true;
+    else delete cache.progress[employeeId][docId];
+    await persist();
   },
 
-  setDocChecked(employeeId, docId, checked) {
-    const data = load();
-    if (!data.progress[employeeId]) data.progress[employeeId] = {};
-    if (checked) data.progress[employeeId][docId] = true;
-    else delete data.progress[employeeId][docId];
-    save(data);
-  },
-
-  resetProgress(employeeId) {
-    const data = load();
-    data.progress[employeeId] = {};
-    save(data);
+  async resetProgress(employeeId) {
+    cache.progress[employeeId] = {};
+    await persist();
   },
 
   /* ---------- Commentaires ---------- */
 
   getComments(employeeId) {
-    const data = load();
-    return data.comments[employeeId] || { steps: {}, docs: {} };
+    return cache?.comments[employeeId] || { steps: {}, docs: {} };
   },
 
-  setStepComment(employeeId, stepId, text) {
-    const data = load();
-    if (!data.comments[employeeId]) data.comments[employeeId] = { steps: {}, docs: {} };
-    if (!data.comments[employeeId].steps) data.comments[employeeId].steps = {};
+  async setStepComment(employeeId, stepId, text) {
+    if (!cache.comments[employeeId]) cache.comments[employeeId] = { steps: {}, docs: {} };
+    if (!cache.comments[employeeId].steps) cache.comments[employeeId].steps = {};
     const trimmed = (text || '').trim();
-    if (trimmed) data.comments[employeeId].steps[stepId] = trimmed;
-    else delete data.comments[employeeId].steps[stepId];
-    save(data);
+    if (trimmed) cache.comments[employeeId].steps[stepId] = trimmed;
+    else delete cache.comments[employeeId].steps[stepId];
+    await persist();
   },
 
-  setDocComment(employeeId, docId, text) {
-    const data = load();
-    if (!data.comments[employeeId]) data.comments[employeeId] = { steps: {}, docs: {} };
-    if (!data.comments[employeeId].docs) data.comments[employeeId].docs = {};
+  async setDocComment(employeeId, docId, text) {
+    if (!cache.comments[employeeId]) cache.comments[employeeId] = { steps: {}, docs: {} };
+    if (!cache.comments[employeeId].docs) cache.comments[employeeId].docs = {};
     const trimmed = (text || '').trim();
-    if (trimmed) data.comments[employeeId].docs[docId] = trimmed;
-    else delete data.comments[employeeId].docs[docId];
-    save(data);
+    if (trimmed) cache.comments[employeeId].docs[docId] = trimmed;
+    else delete cache.comments[employeeId].docs[docId];
+    await persist();
   },
 
   /* ---------- Stats ---------- */
 
   getStats(employeeId) {
-    const data = load();
-    const progress = data.progress[employeeId] || {};
-    let totalDocs = 0;
-    let doneDocs = 0;
-    let completeSteps = 0;
-    data.steps.forEach(step => {
+    if (!cache) return { totalDocs: 0, doneDocs: 0, totalSteps: 0, completeSteps: 0, percent: 0 };
+    const progress = cache.progress[employeeId] || {};
+    let totalDocs = 0, doneDocs = 0, completeSteps = 0;
+    cache.steps.forEach(step => {
       totalDocs += step.documents.length;
       const stepDoneCount = step.documents.filter(d => progress[d.id]).length;
       doneDocs += stepDoneCount;
@@ -265,13 +286,13 @@ const Data = {
     });
     return {
       totalDocs, doneDocs,
-      totalSteps: data.steps.length,
+      totalSteps: cache.steps.length,
       completeSteps,
       percent: totalDocs ? Math.round((doneDocs / totalDocs) * 100) : 0
     };
   },
 
-  /* ---------- Admin (mot de passe partagé) ---------- */
+  /* ---------- Admin ---------- */
 
   checkAdminPassword(pw) { return pw === ADMIN_PASSWORD; },
 
@@ -284,17 +305,20 @@ const Data = {
     return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
   },
 
-  /* ---------- Export / import (sauvegarde) ---------- */
+  /* ---------- Export / import ---------- */
 
   exportJSON() {
-    return JSON.stringify(load(), null, 2);
+    return JSON.stringify(cache, null, 2);
   },
 
-  importJSON(json) {
+  async importJSON(json) {
     try {
       const parsed = JSON.parse(json);
       if (!parsed.employees || !parsed.steps) throw new Error('Format invalide');
-      save(parsed);
+      if (!parsed.progress) parsed.progress = {};
+      if (!parsed.comments) parsed.comments = {};
+      cache = parsed;
+      await persist();
       return true;
     } catch (e) {
       console.error(e);
@@ -302,13 +326,13 @@ const Data = {
     }
   },
 
-  resetAll() {
-    localStorage.removeItem(STORAGE_KEY);
-    load(); // recharge les valeurs par défaut
+  async resetAll() {
+    cache = defaultData();
+    await persist();
   }
 };
 
-/* ---------- Toast helper (utilisable partout) ---------- */
+/* ---------- Helpers globaux (utilisés par les pages) ---------- */
 
 function showToast(message) {
   let t = document.querySelector('.toast');
@@ -323,10 +347,15 @@ function showToast(message) {
   showToast._timer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-/* ---------- Helpers HTML ---------- */
-
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, m => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[m]);
 }
+
+/* Exposer en global pour que les autres scripts (non-modules) y accèdent */
+window.Data = Data;
+window.showToast = showToast;
+window.escapeHtml = escapeHtml;
+window.getInitials = getInitials;
+window.colorFor = colorFor;

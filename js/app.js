@@ -1,11 +1,14 @@
 /* Page d'accueil — sélection de l'employé */
 
 (function () {
-  const grid = document.getElementById('employee-grid');
-  const empty = document.getElementById('empty-state');
+  const grid    = document.getElementById('employee-grid');
+  const empty   = document.getElementById('empty-state');
+  const loading = document.getElementById('loading-state');
 
   function render() {
     const employees = Data.getEmployees();
+
+    loading.style.display = 'none';
 
     if (employees.length === 0) {
       grid.style.display = 'none';
@@ -36,5 +39,13 @@
     });
   }
 
-  render();
+  // Attend que Firebase ait chargé les données initiales
+  function start() {
+    if (!window.Data) { setTimeout(start, 50); return; }
+    Data.ready(() => {
+      render();
+      Data.onChange(render);
+    });
+  }
+  start();
 })();

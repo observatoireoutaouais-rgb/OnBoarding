@@ -260,6 +260,20 @@ a:hover { color: var(--odo-orange); }
   font-style: italic;
 }
 
+/* Spinner pour le chargement Firebase */
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(29, 41, 55, 0.12);
+  border-top-color: var(--odo-teal);
+  border-radius: 50%;
+  margin: 0 auto 0.75rem;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* =========================================================
    Boutons
    ========================================================= */

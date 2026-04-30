@@ -8,13 +8,6 @@
     return;
   }
 
-  const employee = Data.getEmployee(employeeId);
-  if (!employee) {
-    sessionStorage.removeItem('odo_current_employee');
-    window.location.href = 'index.html';
-    return;
-  }
-
   const greeting   = document.getElementById('employee-greeting');
   const title      = document.getElementById('employee-title');
   const stepsHost  = document.getElementById('steps-container');
@@ -23,10 +16,11 @@
   const progressFill    = document.getElementById('progress-fill');
   const allDone   = document.getElementById('all-done');
 
-  greeting.textContent = `Bonjour ${employee.name.split(' ')[0]}`;
-  title.textContent = 'Ton parcours d\'intégration';
+  // Drapeau pour ignorer les snapshots Firestore qui surviennent juste après
+  // qu'on ait sauvegardé un commentaire (sinon le textarea perd son focus).
+  let suppressNextRender = false;
 
-  // Petit utilitaire : debounce pour ne pas sauvegarder à chaque frappe
+  // Petit utilitaire : debounce
   function debounce(fn, ms) {
     let t;
     return (...args) => {
@@ -36,6 +30,16 @@
   }
 
   function render() {
+    const employee = Data.getEmployee(employeeId);
+    if (!employee) {
+      sessionStorage.removeItem('odo_current_employee');
+      window.location.href = 'index.html';
+      return;
+    }
+
+    greeting.textContent = `Bonjour ${employee.name.split(' ')[0]}`;
+    title.textContent = 'Ton parcours d\'intégration';
+
     const steps = Data.getSteps();
     const progress = Data.getProgress(employeeId);
     const comments = Data.getComments(employeeId);
@@ -140,15 +144,15 @@
       `;
     }).join('');
 
-    // Brancher les checkboxes
+    // Cases à cocher
     stepsHost.querySelectorAll('.doc-checkbox').forEach(box => {
-      box.addEventListener('change', () => {
-        Data.setDocChecked(employeeId, box.dataset.docId, box.checked);
-        render();
+      box.addEventListener('change', async () => {
+        await Data.setDocChecked(employeeId, box.dataset.docId, box.checked);
+        // Pas besoin d'appeler render(); le snapshot Firestore le fera
       });
     });
 
-    // Toggle des commentaires de document
+    // Toggle commentaires document
     stepsHost.querySelectorAll('[data-toggle-doc]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.toggleDoc;
@@ -164,7 +168,7 @@
       });
     });
 
-    // Toggle des commentaires d'étape
+    // Toggle commentaires étape
     stepsHost.querySelectorAll('[data-toggle-step]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.toggleStep;
@@ -180,37 +184,39 @@
       });
     });
 
-    // Sauvegarde auto des commentaires (debounced)
-    const saveDocComment = debounce((docId, value, savedEl) => {
-      Data.setDocComment(employeeId, docId, value);
+    // Sauvegarde auto des commentaires
+    const saveDocComment = debounce(async (docId, value, savedEl, btnEl) => {
+      suppressNextRender = true;
+      await Data.setDocComment(employeeId, docId, value);
       flashSaved(savedEl);
-      const toggleBtn = document.querySelector(`[data-toggle-doc="${CSS.escape(docId)}"]`);
-      if (toggleBtn) {
-        if (value.trim()) toggleBtn.classList.add('has-comment');
-        else toggleBtn.classList.remove('has-comment');
+      if (btnEl) {
+        if (value.trim()) btnEl.classList.add('has-comment');
+        else btnEl.classList.remove('has-comment');
       }
-    }, 400);
+    }, 500);
 
-    const saveStepComment = debounce((stepId, value, savedEl) => {
-      Data.setStepComment(employeeId, stepId, value);
+    const saveStepComment = debounce(async (stepId, value, savedEl, btnEl) => {
+      suppressNextRender = true;
+      await Data.setStepComment(employeeId, stepId, value);
       flashSaved(savedEl);
-      const toggleBtn = document.querySelector(`[data-toggle-step="${CSS.escape(stepId)}"]`);
-      if (toggleBtn) {
-        if (value.trim()) toggleBtn.classList.add('has-comment');
-        else toggleBtn.classList.remove('has-comment');
+      if (btnEl) {
+        if (value.trim()) btnEl.classList.add('has-comment');
+        else btnEl.classList.remove('has-comment');
       }
-    }, 400);
+    }, 500);
 
     stepsHost.querySelectorAll('[data-doc-comment]').forEach(ta => {
       const docId = ta.dataset.docComment;
       const savedEl = stepsHost.querySelector(`[data-saved-doc="${CSS.escape(docId)}"]`);
-      ta.addEventListener('input', () => saveDocComment(docId, ta.value, savedEl));
+      const btnEl = stepsHost.querySelector(`[data-toggle-doc="${CSS.escape(docId)}"]`);
+      ta.addEventListener('input', () => saveDocComment(docId, ta.value, savedEl, btnEl));
     });
 
     stepsHost.querySelectorAll('[data-step-comment]').forEach(ta => {
       const stepId = ta.dataset.stepComment;
       const savedEl = stepsHost.querySelector(`[data-saved-step="${CSS.escape(stepId)}"]`);
-      ta.addEventListener('input', () => saveStepComment(stepId, ta.value, savedEl));
+      const btnEl = stepsHost.querySelector(`[data-toggle-step="${CSS.escape(stepId)}"]`);
+      ta.addEventListener('input', () => saveStepComment(stepId, ta.value, savedEl, btnEl));
     });
 
     // Message final
@@ -229,5 +235,20 @@
     el._t = setTimeout(() => el.classList.remove('show'), 1500);
   }
 
-  render();
+  function start() {
+    if (!window.Data) { setTimeout(start, 50); return; }
+    Data.ready(() => {
+      render();
+      Data.onChange(() => {
+        // Évite de re-render quand c'est NOUS qui venons de sauvegarder un
+        // commentaire (sinon on perd le focus / la position du curseur).
+        if (suppressNextRender) {
+          suppressNextRender = false;
+          return;
+        }
+        render();
+      });
+    });
+  }
+  start();
 })();

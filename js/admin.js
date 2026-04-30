@@ -1,4 +1,4 @@
-/* Admin — gestion complète */
+/* Admin — gestion complète (version Firebase) */
 
 (function () {
   /* ---------- Auth ---------- */
@@ -42,9 +42,6 @@
     showLogin();
   });
 
-  if (Data.isAdminAuthenticated()) showAdmin();
-  else showLogin();
-
   /* ---------- Onglets ---------- */
 
   document.querySelectorAll('.tab').forEach(tab => {
@@ -71,13 +68,8 @@
     modalEl.innerHTML = '';
   }
 
-  modalBackdrop.addEventListener('click', e => {
-    if (e.target === modalBackdrop) closeModal();
-  });
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-  });
+  modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   /* ---------- Render employés ---------- */
 
@@ -111,7 +103,7 @@
     }).join('');
 
     list.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const action = btn.dataset.action;
         const emp = Data.getEmployee(id);
@@ -119,15 +111,13 @@
 
         if (action === 'reset') {
           if (confirm(`Réinitialiser la progression de ${emp.name} ?`)) {
-            Data.resetProgress(id);
+            await Data.resetProgress(id);
             showToast('Progression réinitialisée');
-            renderEmployees();
           }
         } else if (action === 'delete') {
           if (confirm(`Supprimer ${emp.name} ? Sa progression sera perdue.`)) {
-            Data.removeEmployee(id);
+            await Data.removeEmployee(id);
             showToast('Employé supprimé');
-            renderEmployees();
           }
         } else if (action === 'comments') {
           openCommentsModal(emp);
@@ -144,21 +134,10 @@
 
     steps.forEach(step => {
       const stepComment = comments.steps?.[step.id];
-      if (stepComment) {
-        stepCommentEntries.push({
-          stepTitle: step.title,
-          text: stepComment
-        });
-      }
+      if (stepComment) stepCommentEntries.push({ stepTitle: step.title, text: stepComment });
       step.documents.forEach(doc => {
         const docComment = comments.docs?.[doc.id];
-        if (docComment) {
-          docCommentEntries.push({
-            stepTitle: step.title,
-            docName: doc.name,
-            text: docComment
-          });
-        }
+        if (docComment) docCommentEntries.push({ stepTitle: step.title, docName: doc.name, text: docComment });
       });
     });
 
@@ -209,16 +188,16 @@
       </div>
     `);
     document.getElementById('cancel-emp').addEventListener('click', closeModal);
-    document.getElementById('save-emp').addEventListener('click', () => {
+    const save = async () => {
       const name = document.getElementById('emp-name').value.trim();
       if (!name) return;
-      Data.addEmployee(name);
+      await Data.addEmployee(name);
       closeModal();
       showToast('Employé ajouté');
-      renderEmployees();
-    });
+    };
+    document.getElementById('save-emp').addEventListener('click', save);
     document.getElementById('emp-name').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('save-emp').click();
+      if (e.key === 'Enter') save();
     });
   });
 
@@ -264,30 +243,27 @@
       </div>
     `).join('');
 
-    // Boutons d'étape
     host.querySelectorAll('[data-step-action]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const action = btn.dataset.stepAction;
         const id = btn.dataset.id;
         const step = Data.getSteps().find(s => s.id === id);
         if (!step) return;
 
-        if (action === 'up') { Data.moveStep(id, -1); renderSteps(); }
-        else if (action === 'down') { Data.moveStep(id, 1); renderSteps(); }
+        if (action === 'up')   { await Data.moveStep(id, -1); }
+        else if (action === 'down') { await Data.moveStep(id, 1); }
         else if (action === 'delete') {
           if (confirm(`Supprimer l'étape "${step.title}" et tous ses documents ?`)) {
-            Data.removeStep(id);
+            await Data.removeStep(id);
             showToast('Étape supprimée');
-            renderSteps();
           }
         }
         else if (action === 'edit') openStepModal(step);
       });
     });
 
-    // Boutons de document
     host.querySelectorAll('[data-doc-action]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const action = btn.dataset.docAction;
         const stepId = btn.dataset.step;
         const docId = btn.dataset.doc;
@@ -297,15 +273,13 @@
 
         if (action === 'delete') {
           if (confirm(`Supprimer "${doc.name}" ?`)) {
-            Data.removeDocument(stepId, docId);
+            await Data.removeDocument(stepId, docId);
             showToast('Document supprimé');
-            renderSteps();
           }
         } else if (action === 'edit') openDocModal(stepId, doc);
       });
     });
 
-    // Ajouter document
     host.querySelectorAll('[data-add-doc]').forEach(btn => {
       btn.addEventListener('click', () => openDocModal(btn.dataset.addDoc, null));
     });
@@ -329,15 +303,14 @@
       </div>
     `);
     document.getElementById('cancel-step').addEventListener('click', closeModal);
-    document.getElementById('save-step').addEventListener('click', () => {
+    document.getElementById('save-step').addEventListener('click', async () => {
       const title = document.getElementById('step-title').value.trim();
       const desc = document.getElementById('step-desc').value.trim();
       if (!title) return;
-      if (isEdit) Data.updateStep(step.id, { title, description: desc });
-      else Data.addStep({ title, description: desc });
+      if (isEdit) await Data.updateStep(step.id, { title, description: desc });
+      else await Data.addStep({ title, description: desc });
       closeModal();
       showToast(isEdit ? 'Étape modifiée' : 'Étape ajoutée');
-      renderSteps();
     });
   }
 
@@ -359,15 +332,14 @@
       </div>
     `);
     document.getElementById('cancel-doc').addEventListener('click', closeModal);
-    document.getElementById('save-doc').addEventListener('click', () => {
+    document.getElementById('save-doc').addEventListener('click', async () => {
       const name = document.getElementById('doc-name').value.trim();
       const url = document.getElementById('doc-url').value.trim();
       if (!name || !url) return;
-      if (isEdit) Data.updateDocument(stepId, doc.id, { name, url });
-      else Data.addDocument(stepId, { name, url });
+      if (isEdit) await Data.updateDocument(stepId, doc.id, { name, url });
+      else await Data.addDocument(stepId, { name, url });
       closeModal();
       showToast(isEdit ? 'Document modifié' : 'Document ajouté');
-      renderSteps();
     });
   }
 
@@ -395,30 +367,26 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      if (!confirm('Cela remplacera toutes les données actuelles. Continuer ?')) return;
-      const ok = Data.importJSON(reader.result);
-      if (ok) {
-        showToast('Importation réussie');
-        renderAll();
-      } else {
-        alert('Fichier invalide.');
-      }
+    reader.onload = async () => {
+      if (!confirm('Cela remplacera toutes les données actuelles dans Firebase. Continuer ?')) return;
+      const ok = await Data.importJSON(reader.result);
+      if (ok) showToast('Importation réussie');
+      else alert('Fichier invalide.');
     };
     reader.readAsText(file);
     e.target.value = '';
   });
 
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (confirm('Effacer TOUTES les données (employés, étapes, progression) ?\nCette action est irréversible.')) {
-      Data.resetAll();
+  document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (confirm('Effacer TOUTES les données dans Firebase (employés, étapes, progression, commentaires) ?\nCette action est irréversible.')) {
+      await Data.resetAll();
       showToast('Données réinitialisées');
-      renderAll();
     }
   });
 
   function renderStats() {
     const data = Data.getAll();
+    if (!data) return;
     const totalEmployees = data.employees.length;
     const totalSteps = data.steps.length;
     const totalDocs = data.steps.reduce((acc, s) => acc + s.documents.length, 0);
@@ -435,4 +403,19 @@
     renderSteps();
     renderStats();
   }
+
+  /* ---------- Démarrage ---------- */
+
+  function start() {
+    if (!window.Data) { setTimeout(start, 50); return; }
+    Data.ready(() => {
+      if (Data.isAdminAuthenticated()) showAdmin();
+      else showLogin();
+
+      Data.onChange(() => {
+        if (Data.isAdminAuthenticated()) renderAll();
+      });
+    });
+  }
+  start();
 })();
