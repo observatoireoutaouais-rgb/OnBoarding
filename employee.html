@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon parcours — ODO Outaouais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <header class="site-header">
+        <a href="index.html" class="brand">
+          <span class="brand-mark"></span>
+          <span>ODO Outaouais</span>
+        </a>
+        <a href="index.html" class="nav-link">← Changer d'utilisateur</a>
+      </header>
+
+      <main>
+        <p class="welcome-eyebrow" id="employee-greeting">Bonjour</p>
+        <h1 id="employee-title">Ton parcours d'intégration</h1>
+        <p class="welcome-subtitle">
+          Voici les étapes à compléter. Coche chaque document au fur et à mesure;
+          ta progression est sauvegardée automatiquement.
+        </p>
+
+        <div class="card-soft" style="margin-bottom: 2rem;">
+          <div class="progress-meta">
+            <span id="progress-text">0 sur 0 documents complétés</span>
+            <strong id="progress-percent">0 %</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%;"></div></div>
+        </div>
+
+        <div id="steps-container"></div>
+
+        <div id="all-done" style="display: none; text-align: center; padding: 3rem 1rem;">
+          <h2 style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎉 Bravo !</h2>
+          <p style="opacity: 0.75;">Tu as complété tout ton parcours d'intégration. Bienvenue officiellement dans l'équipe ODO !</p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/employee.js"></script>
+</body>
+</html>
