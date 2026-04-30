@@ -1,0 +1,880 @@
+/* =========================================================
+   ODO OUTAOUAIS — Onboarding
+   Charte graphique officielle
+   ========================================================= */
+
+:root {
+  /* Couleurs symboles & axes */
+  --odo-blue-light: #A3B0E0;     /* Axe Développement social */
+  --odo-yellow:     #FDCA44;     /* Axe Développement socioéconomique */
+  --odo-orange:     #F36C12;     /* Axe Contexte frontalier */
+  --odo-green:      #CEDD88;     /* Axe Intelligence territoriale */
+  --odo-teal:       #49ABA7;     /* Axe Environnement */
+  --odo-blue:       #177FC4;     /* couleur de plus pour dégradés */
+
+  /* Arrière-plans */
+  --odo-navy:       #233C4C;
+  --odo-stone:      #C8C3BA;
+  --odo-cream:      #F4F0E9;
+  --odo-paper:      #FFFBF5;     /* "blanc" hors web */
+
+  /* Texte */
+  --odo-ink:        #1D2937;
+
+  /* Système */
+  --radius:         14px;
+  --radius-lg:      24px;
+  --shadow-sm:      0 1px 2px rgba(29, 41, 55, 0.06), 0 2px 8px rgba(29, 41, 55, 0.04);
+  --shadow-md:      0 4px 16px rgba(29, 41, 55, 0.08), 0 12px 32px rgba(29, 41, 55, 0.06);
+  --shadow-lg:      0 24px 48px rgba(29, 41, 55, 0.12);
+  --transition:     200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   Reset & base
+   ========================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  color: var(--odo-ink);
+  background: var(--odo-cream);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 400;
+  color: var(--odo-navy);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0 0 0.5em;
+}
+
+h1 { font-size: clamp(2rem, 4vw, 3.25rem); }
+h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
+h3 { font-size: 1.25rem; font-family: 'Poppins', sans-serif; font-weight: 600; }
+
+p { margin: 0 0 1em; }
+
+button { font-family: inherit; cursor: pointer; }
+
+a { color: var(--odo-blue); text-decoration: none; transition: color var(--transition); }
+a:hover { color: var(--odo-orange); }
+
+/* =========================================================
+   Layout — pleine page avec dégradé décoratif
+   ========================================================= */
+
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(163, 176, 224, 0.35), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(253, 202, 68, 0.28), transparent 45%),
+    radial-gradient(circle at 92% 88%, rgba(73, 171, 167, 0.30), transparent 50%),
+    radial-gradient(circle at 8% 92%, rgba(243, 108, 18, 0.22), transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.container-narrow {
+  max-width: 720px;
+}
+
+/* =========================================================
+   En-tête
+   ========================================================= */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  color: var(--odo-navy);
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--odo-blue-light) 0deg 72deg,
+    var(--odo-yellow)     72deg 144deg,
+    var(--odo-orange)     144deg 216deg,
+    var(--odo-green)      216deg 288deg,
+    var(--odo-teal)       288deg 360deg
+  );
+  position: relative;
+}
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--odo-paper);
+}
+
+.nav-link {
+  font-size: 0.875rem;
+  color: var(--odo-ink);
+  opacity: 0.65;
+  font-weight: 500;
+}
+.nav-link:hover { opacity: 1; color: var(--odo-navy); }
+
+/* =========================================================
+   Cartes
+   ========================================================= */
+
+.card {
+  background: var(--odo-paper);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(29, 41, 55, 0.05);
+}
+
+.card-soft {
+  background: var(--odo-paper);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(29, 41, 55, 0.06);
+}
+
+/* =========================================================
+   Sélection d'employé (index)
+   ========================================================= */
+
+.welcome-eyebrow {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--odo-orange);
+  margin-bottom: 1rem;
+}
+
+.welcome-title {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  margin-bottom: 1rem;
+}
+
+.welcome-subtitle {
+  font-size: 1.05rem;
+  color: var(--odo-ink);
+  opacity: 0.75;
+  max-width: 38em;
+  margin-bottom: 2.5rem;
+}
+
+.employee-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.employee-card {
+  background: var(--odo-paper);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.employee-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--odo-teal);
+}
+
+.employee-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem;
+  color: var(--odo-paper);
+  flex-shrink: 0;
+}
+
+.employee-name {
+  font-weight: 500;
+  color: var(--odo-navy);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--odo-ink);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* =========================================================
+   Boutons
+   ========================================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--odo-navy);
+  color: var(--odo-paper);
+}
+.btn-primary:hover { background: var(--odo-ink); transform: translateY(-1px); color: var(--odo-paper); }
+
+.btn-accent {
+  background: var(--odo-orange);
+  color: var(--odo-paper);
+}
+.btn-accent:hover { background: #d85a08; transform: translateY(-1px); color: var(--odo-paper); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--odo-navy);
+  border: 1.5px solid rgba(29, 41, 55, 0.15);
+}
+.btn-ghost:hover { border-color: var(--odo-navy); }
+
+.btn-danger {
+  background: transparent;
+  color: #c02f2f;
+  border: 1.5px solid rgba(192, 47, 47, 0.25);
+}
+.btn-danger:hover { background: rgba(192, 47, 47, 0.08); }
+
+.btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+/* =========================================================
+   Formulaires
+   ========================================================= */
+
+.field { margin-bottom: 1.25rem; }
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  color: var(--odo-navy);
+}
+
+.input, .textarea, .select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid rgba(29, 41, 55, 0.12);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--odo-paper);
+  color: var(--odo-ink);
+  transition: border-color var(--transition);
+}
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--odo-teal);
+}
+
+.textarea { min-height: 80px; resize: vertical; }
+
+/* =========================================================
+   Étapes employé
+   ========================================================= */
+
+.progress-bar {
+  height: 10px;
+  background: rgba(29, 41, 55, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 1rem 0 2rem;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--odo-teal), var(--odo-blue));
+  border-radius: 999px;
+  transition: width 400ms ease;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--odo-ink);
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.step {
+  background: var(--odo-paper);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  border-left: 5px solid var(--odo-blue-light);
+  transition: all var(--transition);
+}
+
+.step.complete {
+  border-left-color: var(--odo-teal);
+  background: linear-gradient(to right, rgba(73, 171, 167, 0.06), var(--odo-paper) 30%);
+}
+
+/* Couleurs des étapes par index — rotation des 5 axes */
+.step:nth-child(5n+1) { border-left-color: var(--odo-blue-light); }
+.step:nth-child(5n+2) { border-left-color: var(--odo-yellow); }
+.step:nth-child(5n+3) { border-left-color: var(--odo-orange); }
+.step:nth-child(5n+4) { border-left-color: var(--odo-green); }
+.step:nth-child(5n+5) { border-left-color: var(--odo-teal); }
+
+.step.complete { border-left-color: var(--odo-teal) !important; }
+
+.step-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.step-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.4rem;
+  color: var(--odo-navy);
+  margin: 0;
+}
+
+.step-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(73, 171, 167, 0.15);
+  color: var(--odo-teal);
+  white-space: nowrap;
+}
+
+.step-desc {
+  color: var(--odo-ink);
+  opacity: 0.75;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.doc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  background: var(--odo-cream);
+  border-radius: var(--radius);
+  transition: background var(--transition);
+}
+
+.doc-item:hover { background: rgba(163, 176, 224, 0.18); }
+
+.doc-checkbox {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(29, 41, 55, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  background: var(--odo-paper);
+}
+.doc-checkbox:checked {
+  background: var(--odo-teal);
+  border-color: var(--odo-teal);
+}
+.doc-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 11px;
+  border: solid var(--odo-paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.doc-link {
+  flex: 1;
+  color: var(--odo-navy);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.doc-link:hover { color: var(--odo-orange); }
+.doc-link::after {
+  content: '↗';
+  font-size: 0.85rem;
+  opacity: 0.5;
+}
+
+.doc-checkbox:checked + .doc-link {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+/* =========================================================
+   Progression par étape (mini-barre)
+   ========================================================= */
+
+.step-progress {
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--odo-cream);
+  border-radius: var(--radius);
+}
+
+.step-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--odo-ink);
+  opacity: 0.75;
+  margin-bottom: 0.4rem;
+}
+
+.step-progress-bar {
+  height: 6px;
+  background: rgba(29, 41, 55, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.step-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--odo-blue-light), var(--odo-teal));
+  border-radius: 999px;
+  transition: width 350ms ease;
+}
+
+.step.complete .step-progress-fill {
+  background: linear-gradient(90deg, var(--odo-teal), var(--odo-green));
+}
+
+/* =========================================================
+   Commentaires (employé)
+   ========================================================= */
+
+.doc-item-wrap { display: block; }
+
+/* Le bouton 💬 dans la rangée document */
+.comment-toggle {
+  background: transparent;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  position: relative;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: all var(--transition);
+  line-height: 1;
+}
+.comment-toggle:hover {
+  opacity: 1;
+  background: rgba(29, 41, 55, 0.05);
+}
+.comment-toggle.has-comment {
+  opacity: 1;
+  background: rgba(243, 108, 18, 0.12);
+  border-color: rgba(243, 108, 18, 0.25);
+}
+
+.comment-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  background: var(--odo-orange);
+  border-radius: 50%;
+  border: 1.5px solid var(--odo-paper);
+}
+
+/* La zone qui apparaît sous chaque doc/étape pour saisir un commentaire */
+.comment-box {
+  margin: 0.5rem 0 0.5rem 2.4rem;   /* aligné après la checkbox */
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  animation: slideDown 200ms ease;
+}
+.comment-box[hidden] { display: none; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid rgba(29, 41, 55, 0.12);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  background: var(--odo-paper);
+  color: var(--odo-ink);
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+.comment-textarea:focus {
+  outline: none;
+  border-color: var(--odo-orange);
+}
+
+.comment-saved {
+  font-size: 0.75rem;
+  color: var(--odo-teal);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 200ms;
+  height: 1em;
+}
+.comment-saved.show { opacity: 1; }
+
+/* Section "commentaire d'étape" en bas de chaque step */
+.step-comment-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(29, 41, 55, 0.12);
+}
+
+.step-comment-toggle {
+  background: transparent;
+  border: 1.5px dashed rgba(29, 41, 55, 0.18);
+  color: var(--odo-ink);
+  opacity: 0.7;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.step-comment-toggle:hover {
+  opacity: 1;
+  border-color: var(--odo-orange);
+  color: var(--odo-orange);
+}
+.step-comment-toggle.has-comment {
+  opacity: 1;
+  border-style: solid;
+  background: rgba(243, 108, 18, 0.08);
+  border-color: rgba(243, 108, 18, 0.4);
+  color: var(--odo-orange);
+}
+
+.step-comment-section .comment-box {
+  margin-left: 0;
+  margin-top: 0.6rem;
+}
+
+/* =========================================================
+   Admin
+   ========================================================= */
+
+.admin-section {
+  margin-bottom: 2rem;
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--odo-cream);
+  border-radius: var(--radius);
+}
+
+.admin-row-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--odo-navy);
+}
+
+.admin-row-meta {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.step-admin {
+  background: var(--odo-cream);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid var(--odo-teal);
+}
+
+.step-admin h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+  font-weight: 400;
+  color: var(--odo-navy);
+}
+
+.step-admin .doc-admin-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--odo-paper);
+  border-radius: 8px;
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+.step-admin .doc-admin-row .doc-admin-name { flex: 1; font-weight: 500; }
+.step-admin .doc-admin-row .doc-admin-url {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  color: var(--odo-ink);
+  opacity: 0.5;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 1rem;
+}
+.icon-btn:hover { opacity: 1; background: rgba(29, 41, 55, 0.06); }
+
+/* Bloc de commentaire dans la modale admin */
+.admin-comment-block {
+  background: var(--odo-cream);
+  border-left: 3px solid var(--odo-orange);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+}
+.admin-comment-meta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--odo-navy);
+  margin-bottom: 0.3rem;
+}
+.admin-comment-text {
+  font-size: 0.9rem;
+  color: var(--odo-ink);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Modale
+   ========================================================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 41, 55, 0.55);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.modal-backdrop.active { display: flex; }
+
+.modal {
+  background: var(--odo-paper);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 540px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1.25rem;
+  color: var(--odo-navy);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* =========================================================
+   Onglets
+   ========================================================= */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1.5px solid rgba(29, 41, 55, 0.08);
+  margin-bottom: 2rem;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--odo-ink);
+  opacity: 0.55;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1.5px;
+  transition: all var(--transition);
+}
+.tab:hover { opacity: 0.85; }
+.tab.active {
+  opacity: 1;
+  color: var(--odo-navy);
+  border-bottom-color: var(--odo-orange);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 200ms ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   Toast / messages
+   ========================================================= */
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--odo-navy);
+  color: var(--odo-paper);
+  padding: 0.875rem 1.5rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  opacity: 0;
+  transition: all 300ms ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .container { padding: 1.5rem 1rem 2rem; }
+  .card { padding: 1.5rem; }
+  .step { padding: 1.25rem; }
+  .modal { padding: 1.5rem; }
+}
