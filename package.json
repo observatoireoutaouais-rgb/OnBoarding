@@ -1,9 +1,0 @@
-{
-  "name": "onboarding-odo",
-  "version": "1.0.0",
-  "description": "Site d'onboarding ODO Outaouais — pages statiques HTML/CSS/JS",
-  "private": true,
-  "scripts": {
-    "start": "npx serve -s . -l ${PORT:-3000}"
-  }
-}
